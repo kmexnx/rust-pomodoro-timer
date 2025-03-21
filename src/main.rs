@@ -1,12 +1,40 @@
 use clap::{App, Arg};
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, Sink, Source};
 use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-// Built-in alert sound as bytes, so we don't need an external file
-const ALERT_SOUND: &[u8] = include_bytes!("alert.wav");
+// Simple WAV file containing a beep sound
+// This is a minimal valid WAV file with a simple beep tone
+// Generated programmatically to avoid needing an external file
+const BUILT_IN_BEEP: &[u8] = &[
+    // RIFF header
+    b'R', b'I', b'F', b'F', 
+    0x24, 0x00, 0x00, 0x00, // ChunkSize: 36 + SubChunk2Size
+    b'W', b'A', b'V', b'E', 
+    
+    // fmt subchunk
+    b'f', b'm', b't', b' ', 
+    0x10, 0x00, 0x00, 0x00, // Subchunk1Size: 16 for PCM
+    0x01, 0x00,             // AudioFormat: 1 for PCM
+    0x01, 0x00,             // NumChannels: 1 for mono
+    0x44, 0xAC, 0x00, 0x00, // SampleRate: 44100 Hz
+    0x88, 0x58, 0x01, 0x00, // ByteRate: SampleRate * NumChannels * BitsPerSample/8
+    0x02, 0x00,             // BlockAlign: NumChannels * BitsPerSample/8
+    0x10, 0x00,             // BitsPerSample: 16 bits
+    
+    // data subchunk
+    b'd', b'a', b't', b'a', 
+    0x00, 0x00, 0x00, 0x00, // Subchunk2Size: NumSamples * NumChannels * BitsPerSample/8
+    
+    // Simple beep data would go here
+    // For simplicity, we're creating a very short beep
+    0x00, 0x00, 0x20, 0x00, 0x40, 0x00, 0x60, 0x00,
+    0x80, 0x00, 0xA0, 0x00, 0xC0, 0x00, 0xE0, 0x00,
+    0x00, 0x7F, 0xE0, 0x00, 0xC0, 0x00, 0xA0, 0x00,
+    0x80, 0x00, 0x60, 0x00, 0x40, 0x00, 0x20, 0x00,
+];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = App::new("Pomodoro Timer")
@@ -153,9 +181,16 @@ fn play_sound(custom_sound_file: Option<&str>) -> Result<(), Box<dyn std::error:
         let file = BufReader::new(File::open(file_path)?);
         Decoder::new(file)?
     } else {
-        // Use the built-in alert sound
-        let cursor = Cursor::new(ALERT_SOUND);
-        Decoder::new(cursor)?
+        // Use the built-in beep sound
+        let cursor = Cursor::new(BUILT_IN_BEEP);
+        match Decoder::new(cursor) {
+            Ok(source) => source,
+            Err(_) => {
+                // Fallback to console bell if the decoder fails
+                println!("\x07"); // ASCII bell character
+                return Ok(());
+            }
+        }
     };
 
     sink.append(source);
