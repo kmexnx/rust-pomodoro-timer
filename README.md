@@ -62,9 +62,9 @@ OPTIONS:
     -V, --version                   Prints version information
 ```
 
-## Note about audio
+## Audio
 
-For the built-in sound to work, you need to create a file named `alert.wav` in the `src` directory before building. Alternatively, you can specify your own sound file using the `--sound-file` option.
+The timer includes a built-in beep sound that will play when timers complete, with no external files needed. If you prefer a different sound, you can specify your own WAV file using the `--sound-file` option.
 
 ## License
 
