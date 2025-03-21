@@ -1,0 +1,10 @@
+[package]
+name = "pomodoro-timer"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A simple Pomodoro timer CLI with sound alerts"
+
+[dependencies]
+clap = "2.33"
+rodio = "0.15"
